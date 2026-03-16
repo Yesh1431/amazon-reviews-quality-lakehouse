@@ -16,6 +16,7 @@ def clean_and_normalize(df: DataFrame) -> DataFrame:
         .withColumn("helpful_votes", F.coalesce(F.col("helpful_votes").cast("int"), F.lit(0)))
         .withColumn("verified_purchase", F.coalesce(verified_col, F.lit(False)))
         .dropDuplicates(["review_id"])
+        .withColumn("verified_purchase", F.coalesce(F.col("verified").cast("boolean"), F.lit(False)))
         .withColumn("review_length", F.length(F.col("review_text")))
         .withColumn("title_length", F.length(F.col("review_title")))
         .withColumn("review_year", F.year(F.col("review_date")))
