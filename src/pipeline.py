@@ -65,25 +65,30 @@ def run_pipeline(spark, cfg: PipelineConfig) -> None:
     future_dates = detect_future_dates(enriched)
     null_criticals = null_critical_records(enriched)
 
-    quarantine_candidates = [
+    # Quality-violation quarantine: these review_ids are used to exclude records from curated.
+    quality_violation_candidates = [
         route_to_quarantine(invalid_clean, "missing_critical_fields", cfg.pipeline_run_id, source_file),
-        route_to_quarantine(duplicate_records, "duplicate_review_id", cfg.pipeline_run_id, source_file),
         route_to_quarantine(bad_values, "accepted_values_violation", cfg.pipeline_run_id, source_file),
         route_to_quarantine(boolean_violations, "boolean_validation_failed", cfg.pipeline_run_id, source_file),
         route_to_quarantine(future_dates, "future_date", cfg.pipeline_run_id, source_file),
         route_to_quarantine(null_criticals, "null_critical_columns", cfg.pipeline_run_id, source_file),
     ]
 
-    quarantine_df = _empty_like(quarantine_candidates[0])
-    for candidate in quarantine_candidates:
-        quarantine_df = quarantine_df.unionByName(candidate, allowMissingColumns=True)
+    quality_df = _empty_like(quality_violation_candidates[0])
+    for candidate in quality_violation_candidates:
+        quality_df = quality_df.unionByName(candidate, allowMissingColumns=True)
+    quality_df = quality_df.dropDuplicates(["review_id"])
 
-    quarantine_df = quarantine_df.dropDuplicates(["review_id"])
+    # Duplicate records are quarantined for audit but must NOT filter curated,
+    # because their review_ids overlap with the kept (latest) copies in deduped.
+    dup_quarantine = route_to_quarantine(duplicate_records, "duplicate_review_id", cfg.pipeline_run_id, source_file)
+    quarantine_df = quality_df.unionByName(dup_quarantine, allowMissingColumns=True)
 
-    valid_ids = quarantine_df.select("review_id").distinct()
+    valid_ids = quality_df.select("review_id").distinct()
     curated = enriched.join(valid_ids, on="review_id", how="left_anti")
 
-    row_count_reconciliation(cleaned, curated, quarantine_df)
+    # Reconciliation: every record in deduped lands in exactly curated or quality_df.
+    row_count_reconciliation(deduped, curated, quality_df)
 
     curated.write.mode("overwrite").parquet(cfg.silver_path)
     write_quarantine(quarantine_df, cfg.quarantine_path)

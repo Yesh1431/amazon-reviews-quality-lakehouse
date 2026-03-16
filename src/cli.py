@@ -26,8 +26,10 @@ def main() -> None:
         gold_path=args.gold_path,
         quarantine_path=args.quarantine_path,
     )
-    run_pipeline(spark, cfg)
-    spark.stop()
+    try:
+        run_pipeline(spark, cfg)
+    finally:
+        spark.stop()
 
 
 if __name__ == "__main__":
