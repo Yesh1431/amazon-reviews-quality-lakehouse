@@ -28,6 +28,17 @@ def detect_future_dates(df: DataFrame) -> DataFrame:
     return df.filter(F.col("review_date") > F.current_date())
 
 
+def validate_boolean_columns(df: DataFrame, columns: Iterable[str]) -> DataFrame:
+    invalid_condition = None
+    for col_name in columns:
+        if col_name in df.columns:
+            c = ~F.col(col_name).isin(True, False)
+            invalid_condition = c if invalid_condition is None else (invalid_condition | c)
+    if invalid_condition is None:
+        return df.limit(0)
+    return df.filter(invalid_condition)
+
+
 def null_critical_records(df: DataFrame, columns=None) -> DataFrame:
     cols = [c for c in (columns or CRITICAL_COLUMNS) if c in df.columns]
     if not cols:
