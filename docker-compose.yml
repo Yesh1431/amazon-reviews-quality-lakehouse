@@ -1,0 +1,7 @@
+version: '3.9'
+services:
+  lakehouse:
+    build: .
+    volumes:
+      - ./:/app
+    command: python -m src.cli --input-path data/raw --bronze-path data/bronze --silver-path data/silver --gold-path data/gold --quarantine-path data/quarantine
