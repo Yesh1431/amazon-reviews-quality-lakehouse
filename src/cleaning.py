@@ -5,6 +5,7 @@ from pyspark.sql import functions as F
 def clean_and_normalize(df: DataFrame) -> DataFrame:
     """Standardize text/typing and derive review-level metrics."""
     cleaned = (
+    return (
         df.withColumn("review_text", F.trim(F.regexp_replace(F.coalesce(F.col("review_text"), F.lit("")), r"\s+", " ")))
         .withColumn("review_title", F.trim(F.coalesce(F.col("review_title"), F.lit(""))))
         .withColumn("product_title", F.trim(F.coalesce(F.col("product_title"), F.lit("unknown"))))
@@ -21,6 +22,7 @@ def clean_and_normalize(df: DataFrame) -> DataFrame:
 
     return (
         cleaned.dropDuplicates(["review_id"])
+        .withColumn("verified_purchase", F.coalesce(F.col("verified").cast("boolean"), F.lit(False)) if "verified" in df.columns else F.lit(False))
         .withColumn("review_length", F.length(F.col("review_text")))
         .withColumn("title_length", F.length(F.col("review_title")))
         .withColumn("review_year", F.year(F.col("review_date")))
@@ -30,6 +32,7 @@ def clean_and_normalize(df: DataFrame) -> DataFrame:
             "helpful_vote_ratio",
             F.when(F.col("review_length") <= 0, F.lit(0.0)).otherwise(F.col("helpful_votes") / F.col("review_length")),
         )
+        .withColumn("helpful_vote_ratio", F.when(F.col("review_length") <= 0, F.lit(0.0)).otherwise(F.col("helpful_votes") / F.col("review_length")))
     )
 
 

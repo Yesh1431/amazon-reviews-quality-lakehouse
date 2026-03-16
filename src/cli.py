@@ -28,6 +28,10 @@ def main() -> None:
     )
     run_pipeline(spark, cfg)
     spark.stop()
+    try:
+        run_pipeline(spark, cfg)
+    finally:
+        spark.stop()
 
 
 if __name__ == "__main__":

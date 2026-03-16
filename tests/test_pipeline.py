@@ -15,3 +15,6 @@ def test_dedupe_by_review_id_keeps_latest(spark):
     assert duplicates.count() == 2
     kept = {r["review_id"]: r["review_text"] for r in deduped.collect()}
     assert kept["r1"] == "newest"
+    assert duplicates.count() == 1
+    kept = {r["review_id"]: r["review_text"] for r in deduped.collect()}
+    assert kept["r1"] == "latest"
