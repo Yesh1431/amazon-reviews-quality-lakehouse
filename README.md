@@ -79,10 +79,11 @@ See folders:
    ```bash
    make install
    ```
-2. Download dataset:
+2. (Optional) Download full dataset:
    ```bash
    curl -L -o data/raw/Electronics.json.gz https://datarepo.eng.ucsd.edu/mcauley_group/data/amazon_v2/categoryFiles/Electronics.json.gz
    ```
+   A starter sample file is already included at `data/raw/sample_electronics.json` for quick local runs.
 3. Run pipeline:
    ```bash
    make run
@@ -102,6 +103,9 @@ python -m src.cli \
 ```bash
 make test
 ```
+
+## Notebook
+Use `notebooks/walkthrough.ipynb` to inspect the sample input and generated silver/gold outputs after running the pipeline.
 
 ## Sample Gold Outputs
 - `gold/fact_reviews`

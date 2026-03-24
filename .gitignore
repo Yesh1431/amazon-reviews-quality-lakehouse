@@ -14,3 +14,5 @@ data/quarantine/*
 !data/silver/.gitkeep
 !data/gold/.gitkeep
 !data/quarantine/.gitkeep
+
+!data/raw/sample_electronics.json
